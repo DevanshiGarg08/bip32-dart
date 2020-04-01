@@ -116,11 +116,6 @@ Uint8List privateAdd (Uint8List d,Uint8List tweak) {
   BigInt tt = fromBuffer(tweak);
   Uint8List dt = toBuffer((dd + tt) % n);
 
-  if (dt.length < 32) {
-    Uint8List padLeadingZero = Uint8List(32 - dt.length);
-    dt = Uint8List.fromList(padLeadingZero + dt);
-  }
-
   if (!isPrivate(dt)) return null;
   return dt;
 }
@@ -130,14 +125,14 @@ Uint8List sign(Uint8List hash, Uint8List x) {
   if (!isPrivate(x)) throw new ArgumentError(THROW_BAD_PRIVATE);
   ECSignature sig = deterministicGenerateK(hash, x);
   Uint8List buffer = new Uint8List(64);
-  buffer.setRange(0, 32, encodeBigInt(sig.r));
+  buffer.setRange(0, 32, encodeBigInt(sig.r, minByteLength: 32));
   var s;
   if (sig.s.compareTo(nDiv2) > 0) {
     s = n - sig.s;
   } else {
     s = sig.s;
   }
-  buffer.setRange(32, 64, encodeBigInt(s));
+  buffer.setRange(32, 64, encodeBigInt(s, minByteLength: 32));
   return buffer;
 }
 
@@ -186,7 +181,7 @@ bool verify(Uint8List hash, Uint8List q, Uint8List signature) {
 }
 
 BigInt fromBuffer(Uint8List d) { return decodeBigInt(d); }
-Uint8List toBuffer(BigInt d) { return encodeBigInt(d); }
+Uint8List toBuffer(BigInt d) { return encodeBigInt(d, minByteLength: 32); }
 ECPoint decodeFrom(Uint8List P) { return secp256k1.curve.decodePoint(P); }
 Uint8List getEncoded(ECPoint P, compressed) { return P.getEncoded(compressed); }
 
